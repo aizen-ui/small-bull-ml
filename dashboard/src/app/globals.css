@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* TradingView dark theme palette */
+:root {
+  --tv-bg: #131722;
+  --tv-bg-secondary: #1e222d;
+  --tv-bg-card: #1e222d;
+  --tv-bg-hover: #2a2e39;
+  --tv-border: #2a2e39;
+  --tv-text: #d1d4dc;
+  --tv-text-muted: #787b86;
+  --tv-text-bright: #e0e3eb;
+  --tv-green: #26a69a;
+  --tv-green-bright: #00c853;
+  --tv-red: #ef5350;
+  --tv-red-bright: #ff1744;
+  --tv-blue: #2962ff;
+  --tv-blue-light: #5b9cf6;
+  --tv-orange: #ff9800;
+  --tv-purple: #ab47bc;
+  --tv-yellow: #ffeb3b;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2e39 #131722;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: #131722;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2a2e39;
+  border-radius: 3px;
+}
+
+body {
+  background: var(--tv-bg);
+  color: var(--tv-text);
+  font-feature-settings: "tnum";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular numbers for financial data */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-live {
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+/* Card style */
+.tv-card {
+  @apply rounded-lg border border-[#2a2e39] bg-[#1e222d];
+}
+
+.tv-card-header {
+  @apply px-4 py-3 border-b border-[#2a2e39] flex items-center justify-between;
+}
+
+/* Prediction direction badges */
+.badge-up {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold;
+  background: rgba(38, 166, 154, 0.15);
+  color: #26a69a;
+}
+.badge-down {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold;
+  background: rgba(239, 83, 80, 0.15);
+  color: #ef5350;
+}
+.badge-neutral {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold;
+  background: rgba(120, 123, 134, 0.15);
+  color: #787b86;
+}

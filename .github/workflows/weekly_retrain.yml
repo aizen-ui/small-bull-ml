@@ -1,0 +1,39 @@
+name: Weekly Model Retrain
+
+on:
+  schedule:
+    # Every Saturday at 6:00 AM UTC (11:30 AM IST)
+    - cron: '0 6 * * 6'
+  workflow_dispatch:
+    inputs:
+      skip_tuning:
+        description: 'Skip hyperparameter tuning (faster)'
+        type: boolean
+        default: false
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run retrain pipeline
+        run: |
+          if [ "${{ github.event.inputs.skip_tuning }}" = "true" ]; then
+            python -m pipelines.retrain_pipeline --skip-tuning
+          else
+            python -m pipelines.retrain_pipeline
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}

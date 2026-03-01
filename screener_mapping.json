@@ -1,0 +1,150 @@
+{
+  "format_version": "2.1",
+  "description": "Mapping configuration for Screener.in Excel export format",
+
+  "sheets": {
+    "profit_loss": "Profit & Loss",
+    "quarters": "Quarters",
+    "balance_sheet": "Balance Sheet",
+    "cash_flow": "Cash Flow",
+    "data_sheet": "Data Sheet"
+  },
+
+  "data_sheet_structure": {
+    "company_name": {"row": 0, "col": 1},
+    "number_of_shares": {"row": 5, "col": 1, "label": "Number of shares"},
+    "face_value": {"row": 6, "col": 1, "label": "Face Value"},
+    "current_price": {"row": 7, "col": 1, "label": "Current Price"},
+    "market_cap": {"row": 8, "col": 1, "label": "Market Capitalization"},
+
+    "sections": {
+      "profit_loss": {"start_row": 14, "header": "PROFIT & LOSS"},
+      "quarters": {"start_row": 39, "header": "Quarters"},
+      "balance_sheet": {"start_row": 54, "header": "BALANCE SHEET"},
+      "cash_flow": {"start_row": 79, "header": "CASH FLOW:"}
+    }
+  },
+
+  "profit_loss_mapping": {
+    "header_row": 1,
+    "narration_col": 0,
+    "data_start_col": 1,
+    "metrics": {
+      "Sales": {"aliases": ["Revenue", "Total Revenue", "Net Sales"]},
+      "Expenses": {"aliases": ["Total Expenses"]},
+      "Operating Profit": {"aliases": ["EBIT", "Operating Income"]},
+      "Other Income": {"aliases": []},
+      "Depreciation": {"aliases": ["Depreciation & Amortization"]},
+      "Interest": {"aliases": ["Interest Expense", "Finance Cost"]},
+      "Profit before tax": {"aliases": ["PBT", "Pre-tax Profit"]},
+      "Tax": {"aliases": ["Tax Expense", "Income Tax"]},
+      "Net profit": {"aliases": ["Net Income", "PAT", "Profit After Tax"]},
+      "EPS": {"aliases": ["Earnings Per Share"]},
+      "Price to earning": {"aliases": ["P/E", "PE Ratio"]},
+      "Price": {"aliases": ["Stock Price"]},
+      "Dividend Payout": {"aliases": []},
+      "OPM": {"aliases": ["Operating Profit Margin"]}
+    }
+  },
+
+  "balance_sheet_mapping": {
+    "header_row": 1,
+    "narration_col": 0,
+    "data_start_col": 1,
+    "metrics": {
+      "Equity Share Capital": {"aliases": ["Share Capital"]},
+      "Reserves": {"aliases": ["Reserves & Surplus"]},
+      "Borrowings": {"aliases": ["Total Borrowings", "Debt"]},
+      "Other Liabilities": {"aliases": []},
+      "Total": {"aliases": ["Total Liabilities", "Total Assets"], "note": "appears twice - liabilities and assets"},
+      "Net Block": {"aliases": ["Fixed Assets", "Property Plant Equipment"]},
+      "Capital Work in Progress": {"aliases": ["CWIP"]},
+      "Investments": {"aliases": []},
+      "Other Assets": {"aliases": []},
+      "Working Capital": {"aliases": []},
+      "Debtors": {"aliases": ["Receivables", "Trade Receivables", "Accounts Receivable"]},
+      "Inventory": {"aliases": ["Inventories"]},
+      "Debtor Days": {"aliases": ["Days Sales Outstanding", "DSO"]},
+      "Inventory Turnover": {"aliases": []}
+    }
+  },
+
+  "cash_flow_mapping": {
+    "header_row": 1,
+    "narration_col": 0,
+    "data_start_col": 1,
+    "metrics": {
+      "Cash from Operating Activity": {"aliases": ["Operating Cash Flow", "CFO"]},
+      "Cash from Investing Activity": {"aliases": ["Investing Cash Flow", "CFI"]},
+      "Cash from Financing Activity": {"aliases": ["Financing Cash Flow", "CFF"]},
+      "Net Cash Flow": {"aliases": ["Net Change in Cash"]}
+    }
+  },
+
+  "quarters_mapping": {
+    "header_row": 1,
+    "narration_col": 0,
+    "data_start_col": 1,
+    "metrics": {
+      "Sales": {"aliases": ["Revenue"]},
+      "Expenses": {"aliases": []},
+      "Operating Profit": {"aliases": []},
+      "Other Income": {"aliases": []},
+      "Depreciation": {"aliases": []},
+      "Interest": {"aliases": []},
+      "Profit before tax": {"aliases": ["PBT"]},
+      "Tax": {"aliases": []},
+      "Net profit": {"aliases": ["PAT"]},
+      "OPM": {"aliases": ["Operating Profit Margin"]}
+    }
+  },
+
+  "derived_metrics": {
+    "total_equity": {
+      "formula": "Equity Share Capital + Reserves",
+      "description": "Total Shareholders' Equity"
+    },
+    "total_debt": {
+      "formula": "Borrowings",
+      "description": "Total Debt (Short + Long term)"
+    },
+    "total_assets": {
+      "formula": "Total (second occurrence in Balance Sheet)",
+      "description": "Total Assets"
+    },
+    "total_liabilities": {
+      "formula": "Borrowings + Other Liabilities",
+      "description": "Total Liabilities"
+    },
+    "current_assets": {
+      "formula": "Debtors + Inventory + Cash & Bank + Other Current Assets",
+      "description": "Estimated Current Assets"
+    },
+    "current_liabilities": {
+      "formula": "Other Liabilities (approximation)",
+      "description": "Estimated Current Liabilities"
+    },
+    "ebitda": {
+      "formula": "Operating Profit + Depreciation",
+      "description": "EBITDA"
+    },
+    "gross_profit": {
+      "formula": "Sales - (Expenses - Depreciation - Interest)",
+      "description": "Gross Profit (approximation)"
+    },
+    "free_cash_flow": {
+      "formula": "Cash from Operating Activity + Cash from Investing Activity",
+      "description": "Free Cash Flow"
+    },
+    "capital_expenditure": {
+      "formula": "abs(Cash from Investing Activity)",
+      "description": "Capital Expenditure (approximation)"
+    }
+  },
+
+  "special_columns": {
+    "trailing": "Trailing 12 months (TTM) data",
+    "best_case": "Best case projection",
+    "worst_case": "Worst case projection"
+  }
+}
