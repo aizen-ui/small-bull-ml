@@ -1,15 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Single shared instance — avoids "Multiple GoTrueClient instances" warning
+let _client: SupabaseClient | null = null;
 
-// For client-side realtime subscriptions
-export function createBrowserClient() {
-  return createClient(supabaseUrl, supabaseKey, {
-    realtime: {
-      params: { eventsPerSecond: 10 },
-    },
+export function createBrowserClient(): SupabaseClient {
+  if (_client) return _client;
+  _client = createClient(supabaseUrl, supabaseKey, {
+    realtime: { params: { eventsPerSecond: 10 } },
   });
+  return _client;
 }
+
+export const supabase = createBrowserClient();
