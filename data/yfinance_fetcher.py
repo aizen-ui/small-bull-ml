@@ -2,11 +2,31 @@
 
 from __future__ import annotations
 import logging
+import time
 from datetime import date
 import yfinance as yf
 import pandas as pd
 
 logger = logging.getLogger(__name__)
+
+BATCH_SIZE = 10      # symbols per request
+BATCH_DELAY = 3.0    # seconds between batches to avoid rate limiting
+
+
+def _download_batched(symbols: list[str], **kwargs) -> pd.DataFrame:
+    """Download in small batches with delays to avoid Yahoo rate limiting."""
+    frames = []
+    for i in range(0, len(symbols), BATCH_SIZE):
+        batch = symbols[i:i + BATCH_SIZE]
+        try:
+            raw = yf.download(" ".join(batch), group_by="ticker",
+                              threads=False, **kwargs)
+            frames.append((batch, raw))
+        except Exception as e:
+            logger.warning(f"Batch {i//BATCH_SIZE + 1} failed: {e}")
+        if i + BATCH_SIZE < len(symbols):
+            time.sleep(BATCH_DELAY)
+    return frames
 
 
 def fetch_daily(symbols: list[str], period: str = "2y") -> dict[str, pd.DataFrame]:
@@ -15,46 +35,37 @@ def fetch_daily(symbols: list[str], period: str = "2y") -> dict[str, pd.DataFram
     Returns {symbol: DataFrame} with columns: date, open, high, low, close, volume
     """
     logger.info(f"Fetching daily data for {len(symbols)} symbols, period={period}")
-    tickers_str = " ".join(symbols)
-    raw = yf.download(tickers_str, period=period, auto_adjust=True,
-                      group_by="ticker", threads=True)
+    batches = _download_batched(symbols, period=period, auto_adjust=True)
 
     result = {}
-    for symbol in symbols:
-        try:
-            # Extract per-symbol data from MultiIndex columns
-            if isinstance(raw.columns, pd.MultiIndex):
-                if symbol in raw.columns.get_level_values(-1):
-                    df = raw.xs(symbol, level="Ticker", axis=1).copy()
-                elif len(symbols) == 1:
-                    df = raw.droplevel("Ticker", axis=1).copy()
+    for batch_symbols, raw in batches:
+        for symbol in batch_symbols:
+            try:
+                if isinstance(raw.columns, pd.MultiIndex):
+                    if symbol in raw.columns.get_level_values(-1):
+                        df = raw.xs(symbol, level="Ticker", axis=1).copy()
+                    elif len(batch_symbols) == 1:
+                        df = raw.droplevel("Ticker", axis=1).copy()
+                    else:
+                        continue
                 else:
-                    logger.warning(f"No data for {symbol}")
+                    df = raw.copy()
+
+                df = df.dropna(subset=["Close"])
+                if df.empty:
                     continue
-            else:
-                df = raw.copy()
 
-            df = df.dropna(subset=["Close"])
-            if df.empty:
-                logger.warning(f"No data for {symbol}")
-                continue
-
-            df = df.reset_index()
-            df = df.rename(columns={
-                "Date": "date",
-                "Open": "open",
-                "High": "high",
-                "Low": "low",
-                "Close": "close",
-                "Volume": "volume",
-            })
-            # Keep only needed columns
-            df = df[["date", "open", "high", "low", "close", "volume"]]
-            df["date"] = pd.to_datetime(df["date"]).dt.date
-            df["volume"] = df["volume"].astype(int)
-            result[symbol] = df
-        except Exception as e:
-            logger.error(f"Error processing {symbol}: {e}")
+                df = df.reset_index()
+                df = df.rename(columns={
+                    "Date": "date", "Open": "open", "High": "high",
+                    "Low": "low", "Close": "close", "Volume": "volume",
+                })
+                df = df[["date", "open", "high", "low", "close", "volume"]]
+                df["date"] = pd.to_datetime(df["date"]).dt.date
+                df["volume"] = df["volume"].astype(int)
+                result[symbol] = df
+            except Exception as e:
+                logger.error(f"Error processing {symbol}: {e}")
 
     logger.info(f"Successfully fetched {len(result)}/{len(symbols)} symbols")
     return result
@@ -71,45 +82,39 @@ def fetch_intraday(symbols: list[str], interval: str = "15m") -> dict[str, pd.Da
     Returns {symbol: DataFrame} with columns: timestamp, open, high, low, close, volume
     """
     logger.info(f"Fetching intraday ({interval}) for {len(symbols)} symbols")
-    tickers_str = " ".join(symbols)
-    raw = yf.download(tickers_str, period="1d", interval=interval,
-                      auto_adjust=True, group_by="ticker", threads=True)
+    batches = _download_batched(symbols, period="1d", interval=interval,
+                                auto_adjust=True)
 
     result = {}
-    for symbol in symbols:
-        try:
-            # Extract per-symbol data from MultiIndex columns
-            if isinstance(raw.columns, pd.MultiIndex):
-                if symbol in raw.columns.get_level_values(-1):
-                    df = raw.xs(symbol, level="Ticker", axis=1).copy()
-                elif len(symbols) == 1:
-                    df = raw.droplevel("Ticker", axis=1).copy()
+    for batch_symbols, raw in batches:
+        for symbol in batch_symbols:
+            try:
+                if isinstance(raw.columns, pd.MultiIndex):
+                    if symbol in raw.columns.get_level_values(-1):
+                        df = raw.xs(symbol, level="Ticker", axis=1).copy()
+                    elif len(batch_symbols) == 1:
+                        df = raw.droplevel("Ticker", axis=1).copy()
+                    else:
+                        continue
                 else:
+                    df = raw.copy()
+
+                df = df.dropna(subset=["Close"])
+                if df.empty:
                     continue
-            else:
-                df = raw.copy()
 
-            df = df.dropna(subset=["Close"])
-            if df.empty:
-                continue
-
-            df = df.reset_index()
-            # yfinance uses "Datetime" for intraday index
-            ts_col = "Datetime" if "Datetime" in df.columns else "Date"
-            df = df.rename(columns={
-                ts_col: "timestamp",
-                "Open": "open",
-                "High": "high",
-                "Low": "low",
-                "Close": "close",
-                "Volume": "volume",
-            })
-            df = df[["timestamp", "open", "high", "low", "close", "volume"]]
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
-            df["volume"] = df["volume"].astype(int)
-            result[symbol] = df
-        except Exception as e:
-            logger.error(f"Error processing intraday for {symbol}: {e}")
+                df = df.reset_index()
+                ts_col = "Datetime" if "Datetime" in df.columns else "Date"
+                df = df.rename(columns={
+                    ts_col: "timestamp", "Open": "open", "High": "high",
+                    "Low": "low", "Close": "close", "Volume": "volume",
+                })
+                df = df[["timestamp", "open", "high", "low", "close", "volume"]]
+                df["timestamp"] = pd.to_datetime(df["timestamp"])
+                df["volume"] = df["volume"].astype(int)
+                result[symbol] = df
+            except Exception as e:
+                logger.error(f"Error processing intraday for {symbol}: {e}")
 
     logger.info(f"Successfully fetched intraday for {len(result)}/{len(symbols)} symbols")
     return result
