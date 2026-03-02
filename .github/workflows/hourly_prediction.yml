@@ -28,3 +28,4 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          INDIANAPI_KEY: ${{ secrets.INDIANAPI_KEY }}
