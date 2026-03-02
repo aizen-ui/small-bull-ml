@@ -245,14 +245,23 @@ def _local_model_dir():
 
 def upload_model(model_bytes: bytes, version: str) -> None:
     """Upload model pickle to Supabase Storage, fallback to local disk."""
+    import logging
+    _logger = logging.getLogger(__name__)
     path = f"{version}.pkl"
     try:
-        client().storage.from_("models").upload(path, model_bytes,
-                                                 file_options={"content-type": "application/octet-stream",
-                                                               "upsert": "true"})
+        # Try to remove existing file first (upsert not reliable in all SDK versions)
+        try:
+            client().storage.from_("models").remove([path])
+        except Exception:
+            pass
+        client().storage.from_("models").upload(
+            path, model_bytes,
+            file_options={"content-type": "application/octet-stream"}
+        )
+        _logger.info(f"Model {version} uploaded to Supabase Storage successfully")
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).warning(f"Supabase Storage upload failed ({e}), saving locally")
+        _logger.error(f"Supabase Storage upload FAILED: {e}")
+        _logger.info("Falling back to local disk save")
         _local_model_dir().mkdir(parents=True, exist_ok=True)
         (_local_model_dir() / path).write_bytes(model_bytes)
 
