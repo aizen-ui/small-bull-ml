@@ -3,29 +3,17 @@ name: Minute Predictions (every 5 min via Actions)
 on:
   schedule:
     # Every 5 minutes during IST trading hours (3:45 AM - 10:00 AM UTC)
-    # GitHub Actions cron minimum is 5 min. For true 1-min, run locally.
     - cron: '*/5 3-10 * * 1-5'
   workflow_dispatch:
 
 jobs:
-  minute:
+  trigger:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 3
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run minute pipeline
-        run: python -m pipelines.minute_pipeline
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          INDIANAPI_KEY: ${{ secrets.INDIANAPI_KEY }}
+      - name: Trigger minute pipeline on Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_API_URL }}/api/run/minute-pipeline" \
+            -H "X-Internal-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            --fail --max-time 120

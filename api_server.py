@@ -635,6 +635,29 @@ def get_market_sentiment():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/run/minute-pipeline", methods=["POST"])
+def run_minute_pipeline():
+    """Triggered by GitHub Actions every 5 min to run minute pipeline on Render.
+    Protected by INTERNAL_API_KEY so only Actions can call it.
+    Runs in background thread so curl doesn't time out.
+    """
+    key = request.headers.get("X-Internal-Key", "")
+    expected = os.environ.get("INTERNAL_API_KEY", "")
+    if not expected or key != expected:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    def _run():
+        try:
+            from pipelines.minute_pipeline import run_once
+            run_once()
+        except Exception as e:
+            logger.exception(f"Minute pipeline error: {e}")
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    return jsonify({"status": "started"}), 202
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     port = int(os.environ.get("PORT", 5000))
