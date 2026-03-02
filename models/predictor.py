@@ -46,7 +46,7 @@ def predict_for_stock(model: StockPredictor, features: pd.DataFrame) -> dict | N
         return None
 
     # Use the latest row
-    latest = features.iloc[[-1]]
+    latest = features.iloc[[-1]].copy()
 
     # Ensure feature columns match model's expected features
     expected = model.feature_names
