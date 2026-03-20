@@ -9,22 +9,11 @@ on:
 jobs:
   nightly:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run nightly pipeline
-        run: python -m pipelines.nightly_pipeline
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          INDIANAPI_KEY: ${{ secrets.INDIANAPI_KEY }}
+      - name: Trigger nightly pipeline on Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_API_URL }}/api/run/nightly-pipeline" \
+            -H "X-Internal-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            --fail --max-time 120

@@ -64,6 +64,16 @@ def step_compute_indicators():
     stock_ids = db.get_all_stock_ids()
     count = 0
 
+    # Only upsert columns that exist in the live DB table.
+    # compute_all() may produce extra columns that the live schema lacks.
+    DB_INDICATOR_COLS = {
+        "date", "rsi_14", "macd", "macd_signal", "macd_hist",
+        "bb_upper", "bb_middle", "bb_lower", "atr_14", "obv",
+        "sma_20", "sma_50", "ema_12", "ema_26",
+        "stoch_k", "stoch_d", "vwap",
+        "pct_change_1d", "pct_change_5d", "pct_change_20d", "volatility_20d",
+    }
+
     for symbol, sid in stock_ids.items():
         prices = db.get_daily_prices(sid, days=60)
         if len(prices) < 30:
@@ -75,9 +85,10 @@ def step_compute_indicators():
         price_df = price_df.sort_values("date").reset_index(drop=True)
 
         indicators = compute_all(price_df)
-        # Take only the latest row
+        # Take only the latest row, filtered to DB-safe columns
         latest = indicators.iloc[-1:]
-        rows = latest.to_dict("records")
+        safe_cols = [c for c in latest.columns if c in DB_INDICATOR_COLS]
+        rows = latest[safe_cols].to_dict("records")
         db.upsert_indicators(sid, rows)
         count += 1
 

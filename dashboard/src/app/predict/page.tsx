@@ -141,6 +141,7 @@ export default function PredictPage() {
         background: { type: ColorType.Solid, color: "#131722" },
         textColor: "#787b86",
         fontSize: 11,
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: "#1e222d" },

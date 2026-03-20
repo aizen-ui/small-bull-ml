@@ -57,7 +57,7 @@ STOCK_UNIVERSE = [
     {"symbol": "WIPRO.NS", "indianapi_name": "Wipro", "company_name": "Wipro Ltd", "sector": "IT", "industry": "IT Services & Consulting", "market_cap_category": "largecap", "is_nifty50": True},
 
     # ── Extra Midcap / High-Interest Stocks ───────────────────
-    {"symbol": "ZOMATO.NS", "indianapi_name": "Zomato", "company_name": "Zomato Ltd", "sector": "Consumer Discretionary", "industry": "Internet & Catalogue Retail", "market_cap_category": "largecap", "is_nifty50": False},
+    {"symbol": "ETERNAL.NS", "indianapi_name": "Zomato", "company_name": "Eternal Ltd (Zomato)", "sector": "Consumer Discretionary", "industry": "Internet & Catalogue Retail", "market_cap_category": "largecap", "is_nifty50": False},
     {"symbol": "PAYTM.NS", "indianapi_name": "Paytm", "company_name": "One 97 Communications Ltd", "sector": "Financials", "industry": "Fintech", "market_cap_category": "midcap", "is_nifty50": False},
     {"symbol": "DMART.NS", "indianapi_name": "Avenue Supermarts", "company_name": "Avenue Supermarts Ltd", "sector": "Consumer Discretionary", "industry": "Retail", "market_cap_category": "largecap", "is_nifty50": False},
     {"symbol": "PIDILITIND.NS", "indianapi_name": "Pidilite Industries", "company_name": "Pidilite Industries Ltd", "sector": "Materials", "industry": "Specialty Chemicals", "market_cap_category": "largecap", "is_nifty50": False},

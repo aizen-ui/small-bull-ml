@@ -14,27 +14,19 @@ on:
 jobs:
   retrain:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run retrain pipeline
+      - name: Trigger retrain pipeline on Render
         run: |
-          if [ "${{ github.event.inputs.skip_tuning }}" = "true" ]; then
-            python -m pipelines.retrain_pipeline --skip-tuning
+          SKIP_TUNING="${{ github.event.inputs.skip_tuning }}"
+          if [ "$SKIP_TUNING" = "true" ]; then
+            BODY='{"skip_tuning": true}'
           else
-            python -m pipelines.retrain_pipeline
+            BODY='{"skip_tuning": false}'
           fi
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          INDIANAPI_KEY: ${{ secrets.INDIANAPI_KEY }}
+          curl -X POST "${{ secrets.RENDER_API_URL }}/api/run/retrain-pipeline" \
+            -H "X-Internal-Key: ${{ secrets.INTERNAL_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            --fail --max-time 120
