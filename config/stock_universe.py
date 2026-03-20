@@ -53,7 +53,7 @@ STOCK_UNIVERSE = [
     {"symbol": "BAJAJ-AUTO.NS", "indianapi_name": "Bajaj Auto", "company_name": "Bajaj Auto Ltd", "sector": "Automobile", "industry": "Two Wheelers", "market_cap_category": "largecap", "is_nifty50": True},
     {"symbol": "TATACONSUM.NS", "indianapi_name": "Tata Consumer Products", "company_name": "Tata Consumer Products Ltd", "sector": "FMCG", "industry": "Tea & Coffee", "market_cap_category": "largecap", "is_nifty50": True},
     {"symbol": "HDFCLIFE.NS", "indianapi_name": "HDFC Life Insurance", "company_name": "HDFC Life Insurance Company Ltd", "sector": "Financials", "industry": "Life Insurance", "market_cap_category": "largecap", "is_nifty50": True},
-    {"symbol": "LTIM.NS", "indianapi_name": "LTIMindtree", "company_name": "LTIMindtree Ltd", "sector": "IT", "industry": "IT Services & Consulting", "market_cap_category": "largecap", "is_nifty50": True},
+    {"symbol": "LTM.NS", "indianapi_name": "LTIMindtree", "company_name": "LTIMindtree Ltd (LTM)", "sector": "IT", "industry": "IT Services & Consulting", "market_cap_category": "largecap", "is_nifty50": True},
     {"symbol": "WIPRO.NS", "indianapi_name": "Wipro", "company_name": "Wipro Ltd", "sector": "IT", "industry": "IT Services & Consulting", "market_cap_category": "largecap", "is_nifty50": True},
 
     # ── Extra Midcap / High-Interest Stocks ───────────────────

@@ -85,10 +85,19 @@ def step_compute_indicators():
         price_df = price_df.sort_values("date").reset_index(drop=True)
 
         indicators = compute_all(price_df)
+        # Cast OBV to int (DB column is BIGINT, but OBV is computed as float)
+        if "obv" in indicators.columns:
+            indicators["obv"] = indicators["obv"].fillna(0).astype(int)
         # Take only the latest row, filtered to DB-safe columns
         latest = indicators.iloc[-1:]
         safe_cols = [c for c in latest.columns if c in DB_INDICATOR_COLS]
         rows = latest[safe_cols].to_dict("records")
+        # Replace NaN/inf with None for Supabase compatibility
+        import math
+        for row in rows:
+            for k, v in row.items():
+                if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+                    row[k] = None
         db.upsert_indicators(sid, rows)
         count += 1
 
