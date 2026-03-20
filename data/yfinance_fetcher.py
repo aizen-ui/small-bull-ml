@@ -9,8 +9,9 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-BATCH_SIZE = 10      # symbols per request
-BATCH_DELAY = 3.0    # seconds between batches to avoid rate limiting
+BATCH_SIZE = 3       # symbols per request (small to avoid rate limits on cloud IPs)
+BATCH_DELAY = 10.0   # seconds between batches to avoid rate limiting
+RETRY_DELAY = 30.0   # seconds to wait after a rate-limit error before retrying
 
 
 def _download_batched(symbols: list[str], **kwargs) -> pd.DataFrame:
@@ -18,12 +19,21 @@ def _download_batched(symbols: list[str], **kwargs) -> pd.DataFrame:
     frames = []
     for i in range(0, len(symbols), BATCH_SIZE):
         batch = symbols[i:i + BATCH_SIZE]
-        try:
-            raw = yf.download(" ".join(batch), group_by="ticker",
-                              threads=False, **kwargs)
-            frames.append((batch, raw))
-        except Exception as e:
-            logger.warning(f"Batch {i//BATCH_SIZE + 1} failed: {e}")
+        for attempt in range(3):
+            try:
+                raw = yf.download(" ".join(batch), group_by="ticker",
+                                  threads=False, **kwargs)
+                frames.append((batch, raw))
+                break
+            except Exception as e:
+                err_str = str(e).lower()
+                if "rate" in err_str or "too many" in err_str or "429" in err_str:
+                    wait = RETRY_DELAY * (attempt + 1)
+                    logger.warning(f"Batch {i//BATCH_SIZE + 1} rate limited (attempt {attempt+1}/3), waiting {wait}s...")
+                    time.sleep(wait)
+                else:
+                    logger.warning(f"Batch {i//BATCH_SIZE + 1} failed: {e}")
+                    break
         if i + BATCH_SIZE < len(symbols):
             time.sleep(BATCH_DELAY)
     return frames
