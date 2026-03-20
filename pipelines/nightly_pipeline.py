@@ -173,6 +173,12 @@ def step_fetch_indianapi(nifty_df=None):
             db.upsert_sentiment(sid, {
                 "date": today.isoformat(),
                 "score": scores.get("weighted_sentiment", 0.0),
+                "news_count": scores.get("news_count", 0),
+                "avg_sentiment": scores.get("avg_sentiment", 0.0),
+                "max_sentiment": scores.get("max_sentiment", 0.0),
+                "min_sentiment": scores.get("min_sentiment", 0.0),
+                "weighted_sentiment": scores.get("weighted_sentiment", 0.0),
+                "news_headlines": json.dumps(headlines),
                 "source": "indianapi_nightly",
             })
 

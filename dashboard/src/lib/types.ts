@@ -71,6 +71,12 @@ export interface SentimentScore {
   stock_id: number;
   date: string;
   score: number;
+  news_count: number | null;
+  avg_sentiment: number | null;
+  max_sentiment: number | null;
+  min_sentiment: number | null;
+  weighted_sentiment: number | null;
+  news_headlines: any | null;
   source: string | null;
 }
 

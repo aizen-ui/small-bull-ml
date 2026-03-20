@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 import json
+import logging
+import time
 from datetime import date, datetime
 from supabase import create_client, Client
 from config.settings import SUPABASE_URL, SUPABASE_KEY
+
+_logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
+RETRY_DELAY = 2.0
 
 
 def get_client() -> Client:
@@ -19,6 +26,28 @@ def client() -> Client:
     if _client is None:
         _client = get_client()
     return _client
+
+
+def _retry(fn, description: str = ""):
+    """Retry a Supabase call on transient connection errors."""
+    for attempt in range(MAX_RETRIES):
+        try:
+            return fn()
+        except Exception as e:
+            err_str = str(e)
+            is_transient = any(k in err_str for k in [
+                "Resource temporarily unavailable",
+                "ReadError", "ConnectError", "TimeoutException",
+            ])
+            if is_transient and attempt < MAX_RETRIES - 1:
+                wait = RETRY_DELAY * (attempt + 1)
+                _logger.warning(f"{description} attempt {attempt+1} failed: {e}, retrying in {wait}s")
+                time.sleep(wait)
+                # Reset client on connection errors
+                global _client
+                _client = None
+            else:
+                raise
 
 
 # ── Generic helpers ───────────────────────────────────────────
@@ -37,8 +66,10 @@ def upsert(table: str, rows: list[dict], on_conflict: str = "") -> None:
     batch_size = 500
     for i in range(0, len(cleaned), batch_size):
         batch = cleaned[i:i + batch_size]
-        q = client().table(table).upsert(batch, on_conflict=on_conflict)
-        q.execute()
+        _retry(
+            lambda b=batch: client().table(table).upsert(b, on_conflict=on_conflict).execute(),
+            description=f"upsert {table}",
+        )
 
 
 def insert(table: str, rows: list[dict]) -> None:
@@ -53,30 +84,37 @@ def insert(table: str, rows: list[dict]) -> None:
     batch_size = 500
     for i in range(0, len(cleaned), batch_size):
         batch = cleaned[i:i + batch_size]
-        client().table(table).insert(batch).execute()
+        _retry(
+            lambda b=batch: client().table(table).insert(b).execute(),
+            description=f"insert {table}",
+        )
 
 
 def query(table: str, select: str = "*", filters: dict | None = None,
           order: str | None = None, limit: int | None = None) -> list[dict]:
     """Simple query builder."""
-    q = client().table(table).select(select)
-    if filters:
-        for col, val in filters.items():
-            q = q.eq(col, val)
-    if order:
-        desc = order.startswith("-")
-        col = order.lstrip("-")
-        q = q.order(col, desc=desc)
-    if limit:
-        q = q.limit(limit)
-    return q.execute().data
+    def _do_query():
+        q = client().table(table).select(select)
+        if filters:
+            for col, val in filters.items():
+                q = q.eq(col, val)
+        if order:
+            desc = order.startswith("-")
+            col_name = order.lstrip("-")
+            q = q.order(col_name, desc=desc)
+        if limit:
+            q = q.limit(limit)
+        return q.execute().data
+    return _retry(_do_query, description=f"query {table}")
 
 
 def update(table: str, filters: dict, values: dict) -> None:
-    q = client().table(table).update(values)
-    for col, val in filters.items():
-        q = q.eq(col, val)
-    q.execute()
+    def _do_update():
+        q = client().table(table).update(values)
+        for col, val in filters.items():
+            q = q.eq(col, val)
+        q.execute()
+    _retry(_do_update, description=f"update {table}")
 
 
 # ── Stock helpers ─────────────────────────────────────────────
